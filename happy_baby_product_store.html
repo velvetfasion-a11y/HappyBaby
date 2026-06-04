@@ -1,0 +1,604 @@
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap");
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #efefef; }
+  .store { font-family: "DM Sans", sans-serif; background: #fff; max-width: 400px; margin: 0 auto; min-height: 100vh; padding: 0 0 2rem; }
+  .store-header { background: #1a1a2e; color: #fff; text-align: center; padding: 14px 20px; letter-spacing: 0.18em; font-size: 13px; font-weight: 600; text-transform: uppercase; position: relative; }
+  .cart-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; background: transparent; font-size: 15px; cursor: pointer; }
+  .cart-btn:hover { background: rgba(255, 255, 255, 0.12); }
+  .cart-count { position: absolute; right: -6px; top: -6px; min-width: 16px; height: 16px; border-radius: 999px; background: #ff6a6a; color: #fff; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+  .product-title { font-family: "DM Serif Display", serif; font-size: 34px; color: #1a1a2e; padding: 18px 20px 4px; line-height: 1.12; text-align: center; }
+  .product-image-wrap { margin: 0 20px 16px; border-radius: 14px; overflow: hidden; background: #f5f3ee; min-height: 240px; display: flex; align-items: center; justify-content: center; }
+  .product-image { width: 100%; height: auto; display: block; }
+  .image-placeholder { color: #999; font-size: 13px; }
+  .thumb-wrap { position: relative; margin: -4px 20px 14px; }
+  .thumb-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scroll-behavior: smooth; }
+  .thumb-btn { border: 1.5px solid #d8d5cf; border-radius: 10px; background: #fff; padding: 2px; width: 58px; height: 58px; flex: 0 0 auto; cursor: pointer; }
+  .thumb-btn.active { border-color: #1a1a2e; }
+  .thumb-img { width: 100%; height: 100%; border-radius: 7px; object-fit: cover; display: block; background: #f5f3ee; }
+  .thumb-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border: 1px solid rgba(26, 26, 46, 0.14); border-radius: 999px; background: rgba(255, 255, 255, 0.42); color: #1a1a2e; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity 0.18s ease; }
+  .thumb-arrow:hover { background: rgba(255, 255, 255, 0.58); }
+  .thumb-arrow.visible { opacity: 1; pointer-events: auto; }
+  .thumb-prev { left: 4px; }
+  .thumb-next { right: 4px; }
+  .review-row { margin: 2px 20px 12px; display: flex; align-items: center; gap: 8px; }
+  .review-stars { display: flex; gap: 2px; }
+  .review-star-box { width: 22px; height: 18px; border-radius: 2px; background: #00b67a; color: #fff; font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .review-text { font-size: 12px; color: #4f4f4f; font-weight: 600; }
+  .description { font-size: 14px; color: #444; padding: 0 20px 18px; line-height: 1.65; }
+  .variants-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #888; padding: 0 20px 10px; }
+  .variant { margin: 0 20px 10px; border: 1.5px solid #e0ddd8; border-radius: 14px; padding: 14px 16px; cursor: pointer; transition: all 0.18s; }
+  .variant.selected { border-color: #1a1a2e; background: #f9f8f6; }
+  .variant-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .variant-meta { display: flex; align-items: center; gap: 12px; }
+  .variant-name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .variant-image { width: 34px; height: 34px; border-radius: 7px; object-fit: cover; border: 1px solid #e6e3dc; background: #f5f3ee; }
+  .variant-price { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+  .add-btn { margin: 4px 20px 0; width: calc(100% - 40px); background: #1a1a2e; color: #fff; border: none; border-radius: 50px; padding: 17px; font-size: 16px; font-weight: 700; font-family: "DM Sans", sans-serif; cursor: pointer; letter-spacing: 0.03em; transition: background 0.15s; }
+  .add-btn:hover { background: #2d2d4e; }
+  .status { padding: 12px 20px 0; font-size: 13px; color: #666; }
+  .cart-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.42); display: none; align-items: flex-end; justify-content: center; z-index: 1000; }
+  .cart-overlay.open { display: flex; }
+  .cart-panel { width: 100%; max-width: 400px; max-height: 70vh; background: #fff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 14px 14px 16px; display: flex; flex-direction: column; }
+  .cart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .cart-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+  .cart-close { border: none; background: transparent; font-size: 22px; line-height: 1; color: #666; cursor: pointer; }
+  .cart-items { overflow-y: auto; padding-right: 2px; }
+  .cart-item { display: flex; align-items: center; gap: 10px; border: 1px solid #ece9e3; border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+  .cart-item-img { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; border: 1px solid #e6e3dc; }
+  .cart-item-main { flex: 1; min-width: 0; }
+  .cart-item-name { font-size: 13px; font-weight: 700; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cart-item-price { font-size: 12px; color: #666; margin-top: 2px; }
+  .cart-item-qty { display: flex; align-items: center; gap: 6px; }
+  .cart-qty-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #d7d3cc; background: #fff; cursor: pointer; }
+  .cart-total { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ece9e3; display: flex; justify-content: space-between; font-weight: 700; color: #1a1a2e; }
+  .cart-empty { font-size: 13px; color: #777; padding: 12px 4px; }
+</style>
+
+<div class="store">
+  <div class="store-header">
+    Happy Baby
+    <button id="cartButton" class="cart-btn" aria-label="Cart">
+      🛒
+      <span id="cartCount" class="cart-count">0</span>
+    </button>
+  </div>
+  <div class="product-title" id="productTitle">Baby Patter Sleep Companion</div>
+
+  <div class="product-image-wrap">
+    <img id="productImage" class="product-image" alt="CJ product image" src="https://oss-cf.cjdropshipping.com/product/2025/09/01/05/3cd41968-6e66-4acd-b9b3-ffb57eb42297.jpg" />
+    <div id="imagePlaceholder" class="image-placeholder" style="display:none;">Loading product image...</div>
+  </div>
+  <div class="thumb-wrap">
+    <div id="thumbStrip" class="thumb-strip">
+      <button class="thumb-btn active" type="button" data-thumb-index="0"><img class="thumb-img" src="https://oss-cf.cjdropshipping.com/product/2025/03/18/02/a3d5cd0f-2f3b-457d-9ca7-f260bd94f7b2_trans.jpeg" alt="Yellow Baby Patter" /></button>
+      <button class="thumb-btn" type="button" data-thumb-index="1"><img class="thumb-img" src="https://oss-cf.cjdropshipping.com/product/2025/03/18/02/cd086c4e-de14-4f2e-bf1c-7e14d0826c21_trans.jpeg" alt="Blue Baby Patter" /></button>
+      <button class="thumb-btn" type="button" data-thumb-index="2"><img class="thumb-img" src="https://oss-cf.cjdropshipping.com/product/2025/03/18/02/df08afa6-b022-4aab-9629-589f3fe2ce2b_trans.jpeg" alt="Pink Baby Patter" /></button>
+      <button class="thumb-btn" type="button" data-thumb-index="3"><img class="thumb-img" src="https://oss-cf.cjdropshipping.com/product/2025/03/18/02/34c25b86-d632-484c-9f36-dc85f660ce84_trans.jpeg" alt="Beige Baby Patter" /></button>
+      <button class="thumb-btn" type="button" data-thumb-index="4"><img class="thumb-img" src="https://oss-cf.cjdropshipping.com/product/2025/03/18/02/85eb4f5d-4bf1-4d1a-ac7d-b4b271d6110b_trans.jpeg" alt="Yellow Baby Patter Plus" /></button>
+      <button class="thumb-btn" type="button" data-thumb-index="5"><img class="thumb-img" src="https://oss-cf.cjdropshipping.com/product/2025/03/18/02/31490542-5a26-4e67-b850-4cd66604edf0_trans.jpeg" alt="Blue Baby Patter Plus" /></button>
+    </div>
+    <button id="thumbPrev" class="thumb-arrow thumb-prev" type="button" aria-label="See previous product images">‹</button>
+    <button id="thumbNext" class="thumb-arrow thumb-next" type="button" aria-label="See more product images">›</button>
+  </div>
+
+  <div class="review-row" aria-label="5 star reviews">
+    <div class="review-stars" aria-hidden="true">
+      <span class="review-star-box">★</span>
+      <span class="review-star-box">★</span>
+      <span class="review-star-box">★</span>
+      <span class="review-star-box">★</span>
+      <span class="review-star-box">★</span>
+    </div>
+    <span class="review-text">5.0 | 2,140 reviews</span>
+  </div>
+
+  <div class="description" id="productDescription">Gentle, rhythmic patting that mimics a parent's touch — so your baby drifts off peacefully and stays asleep. Made from skin-soft plush, with remote-controlled soothing, warm compress support, and optional lullabies. Safe for newborns through age 6, at home or on the go.</div>
+
+  <div class="variants-label">Choose a variant</div>
+  <div id="variantsContainer"></div>
+
+  <button class="add-btn" onclick="addToCart()">Add to cart</button>
+  <div class="status" id="statusText"></div>
+</div>
+
+<div id="cartOverlay" class="cart-overlay" aria-hidden="true">
+  <div class="cart-panel" role="dialog" aria-label="Cart view">
+    <div class="cart-head">
+      <div class="cart-title">Your Cart</div>
+      <button id="cartClose" class="cart-close" type="button" aria-label="Close cart">×</button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-total">
+      <span>Total</span>
+      <span id="cartTotal">$0.00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedVariant = null;
+  let currentProduct = null;
+  let isDataReady = false;
+  let pendingVariantIndex = null;
+  const DEFAULT_HERO_IMAGE = "https://oss-cf.cjdropshipping.com/product/2025/09/01/05/3cd41968-6e66-4acd-b9b3-ffb57eb42297.jpg";
+  const DEFAULT_THUMB_IMAGES = [
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/a3d5cd0f-2f3b-457d-9ca7-f260bd94f7b2_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/cd086c4e-de14-4f2e-bf1c-7e14d0826c21_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/df08afa6-b022-4aab-9629-589f3fe2ce2b_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/34c25b86-d632-484c-9f36-dc85f660ce84_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/85eb4f5d-4bf1-4d1a-ac7d-b4b271d6110b_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/31490542-5a26-4e67-b850-4cd66604edf0_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/62c7f16f-4606-4c95-8e5e-7920e2bc1ec0_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/03/18/02/725e0ecb-5bc0-4d63-ba5c-db29a976b0b0_trans.jpeg",
+    "https://oss-cf.cjdropshipping.com/product/2025/04/08/01/2ee712da-e033-42cd-bf36-1f247941d363.jpg"
+  ];
+  const DEFAULT_VARIANTS = [
+    { name: "Yellow giraff", price: 7.63, image: DEFAULT_THUMB_IMAGES[0] },
+    { name: "Blue bear", price: 7.63, image: DEFAULT_THUMB_IMAGES[1] },
+    { name: "Pink Rabbit", price: 7.63, image: DEFAULT_THUMB_IMAGES[2] },
+    { name: "Beige Tiger", price: 7.63, image: DEFAULT_THUMB_IMAGES[3] },
+    { name: "Yellow Giraffe + 52 Nursery Rhymes", price: 8.24, image: DEFAULT_THUMB_IMAGES[4] },
+    { name: "Blue Bear + 52 Nursery Rhymes", price: 8.24, image: DEFAULT_THUMB_IMAGES[5] },
+    { name: "Pink Rabbit + 52 Nursery Rhymes", price: 8.24, image: DEFAULT_THUMB_IMAGES[6] },
+    { name: "Beige Tiger + 52 Nursery Rhymes", price: 8.24, image: DEFAULT_THUMB_IMAGES[7] },
+    { name: "Beige Original Bear", price: 9.10, image: DEFAULT_THUMB_IMAGES[8] }
+  ];
+  const TARGET_SKU = "CJYD233025008HS";
+  const CART_STORAGE_KEY = "happybaby_cart";
+  const USD_TO_SEK_RATE = 10.6;
+  const FIXED_PRICE_USD = 19.99;
+  const NURSERY_PRICE_USD = 24.99;
+  const CUSTOM_TITLE = "Baby Patter Sleep Companion";
+  const CUSTOM_DESCRIPTION = "Gentle, rhythmic patting that mimics a parent's touch — so your baby drifts off peacefully and stays asleep. Made from skin-soft plush, with remote-controlled soothing, warm compress support, and optional lullabies. Safe for newborns through age 6, at home or on the go.";
+
+  function pickDescription(product) {
+    return (
+      product.descriptionEn ||
+      product.productDescriptionEn ||
+      product.description ||
+      product.productDescription ||
+      "No product description returned from CJ."
+    );
+  }
+
+  function stripHtml(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(String(html || ""), "text/html");
+    return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function isNurseryLabel(label) {
+    return /\+ 52 Nursery Rhymes/i.test(String(label || ""));
+  }
+
+  function usdToSek(amountUsd) {
+    return (Number(amountUsd) || 0) * USD_TO_SEK_RATE;
+  }
+
+  function priceForLabelUsd(label) {
+    return isNurseryLabel(label) ? NURSERY_PRICE_USD : FIXED_PRICE_USD;
+  }
+
+  function priceForLabelSek(label) {
+    return usdToSek(priceForLabelUsd(label));
+  }
+
+  function formatSek(amount) {
+    return Number(amount).toFixed(2).replace(".", ",") + " kr";
+  }
+
+  function formatPrice(label) {
+    return formatSek(priceForLabelSek(label));
+  }
+
+  function loadCart() {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      let changed = false;
+      const normalized = parsed.map((item) => {
+        const next = { ...item };
+        if (next.currency !== "SEK") {
+          next.price = usdToSek(Number(next.price) || 0);
+          next.currency = "SEK";
+          changed = true;
+        }
+        return next;
+      });
+      if (changed) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  }
+
+  function updateCartCount() {
+    const countEl = document.getElementById("cartCount");
+    if (!countEl) return;
+    const cart = loadCart();
+    const total = cart.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+    countEl.textContent = String(total);
+    countEl.style.display = total > 0 ? "flex" : "none";
+  }
+
+  function renderCartView() {
+    const cart = loadCart();
+    const itemsEl = document.getElementById("cartItems");
+    const totalEl = document.getElementById("cartTotal");
+    if (!itemsEl || !totalEl) return;
+
+    if (!cart.length) {
+      itemsEl.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+      totalEl.textContent = formatSek(0);
+      return;
+    }
+
+    let total = 0;
+    itemsEl.innerHTML = cart.map((item) => {
+      const qty = Number(item.qty) || 0;
+      const price = Number(item.price) || 0;
+      total += qty * price;
+      return (
+        '<div class="cart-item">' +
+          '<img class="cart-item-img" src="' + (item.image || DEFAULT_HERO_IMAGE) + '" alt="' + (item.variant || "Item") + '" />' +
+          '<div class="cart-item-main">' +
+            '<div class="cart-item-name">' + (item.variant || "Baby Patter") + "</div>" +
+            '<div class="cart-item-price">' + formatSek(price) + "</div>" +
+          "</div>" +
+          '<div class="cart-item-qty">' +
+            '<button class="cart-qty-btn" type="button" onclick="changeCartQty(\'' + item.id + '\', -1)">−</button>' +
+            '<span>' + qty + "</span>" +
+            '<button class="cart-qty-btn" type="button" onclick="changeCartQty(\'' + item.id + '\', 1)">+</button>' +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+
+    totalEl.textContent = formatSek(total);
+  }
+
+  function changeCartQty(id, delta) {
+    const cart = loadCart();
+    const idx = cart.findIndex((item) => item.id === id);
+    if (idx < 0) return;
+    cart[idx].qty = (Number(cart[idx].qty) || 0) + delta;
+    if (cart[idx].qty <= 0) {
+      cart.splice(idx, 1);
+    }
+    saveCart(cart);
+    updateCartCount();
+    renderCartView();
+  }
+
+  function openCartView() {
+    const overlay = document.getElementById("cartOverlay");
+    if (!overlay) return;
+    renderCartView();
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCartView() {
+    const overlay = document.getElementById("cartOverlay");
+    if (!overlay) return;
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+
+  function getSelectedVariantData() {
+    if (selectedVariant) return selectedVariant;
+    const selectedNode = document.querySelector(".variant.selected");
+    const idx = selectedNode ? Number(selectedNode.getAttribute("data-variant-index") || "0") : 0;
+    if (currentProduct && currentProduct.variants && currentProduct.variants[idx]) return currentProduct.variants[idx];
+    if (DEFAULT_VARIANTS[idx]) return DEFAULT_VARIANTS[idx];
+    return null;
+  }
+
+  function getSelectedVariantIndex() {
+    const selectedNode = document.querySelector(".variant.selected");
+    return selectedNode ? Number(selectedNode.getAttribute("data-variant-index") || "0") : 0;
+  }
+
+  function shortVariantLabel(name, idx) {
+    if (idx >= 0 && idx < DEFAULT_VARIANTS.length) {
+      return DEFAULT_VARIANTS[idx].name;
+    }
+    return String(name || "Option " + (idx + 1)).trim();
+  }
+
+  function markVariantAsLoading(idx) {
+    document.querySelectorAll(".variant-price").forEach((el) => {
+      const original = el.getAttribute("data-original-price");
+      if (original) el.textContent = original;
+    });
+    const priceEl = document.querySelector('[data-variant-index="' + idx + '"] .variant-price');
+    if (!priceEl) return;
+    if (!priceEl.getAttribute("data-original-price")) {
+      priceEl.setAttribute("data-original-price", priceEl.textContent);
+    }
+    priceEl.textContent = "Loading...";
+  }
+
+  function handleVariantClick(idx) {
+    if (!isDataReady) {
+      pendingVariantIndex = idx;
+      document.querySelectorAll(".variant").forEach((item) => item.classList.remove("selected"));
+      const target = document.querySelector('[data-variant-index="' + idx + '"]');
+      if (target) target.classList.add("selected");
+      markVariantAsLoading(idx);
+      updateMainImage(DEFAULT_THUMB_IMAGES[idx] || DEFAULT_HERO_IMAGE);
+      highlightThumb(idx);
+      return;
+    }
+    selectVariant(idx);
+  }
+
+  function selectVariant(idx) {
+    const all = document.querySelectorAll(".variant");
+    all.forEach((item) => item.classList.remove("selected"));
+    const target = document.querySelector('[data-variant-index="' + idx + '"]');
+    if (target) target.classList.add("selected");
+    selectedVariant = currentProduct && currentProduct.variants ? (currentProduct.variants[idx] || null) : null;
+    const nextImage = selectedVariant && selectedVariant.image
+      ? selectedVariant.image
+      : (currentProduct && currentProduct.image ? currentProduct.image : DEFAULT_THUMB_IMAGES[idx] || DEFAULT_HERO_IMAGE);
+    updateMainImage(nextImage);
+    highlightThumb(idx);
+  }
+
+  function updateMainImage(imageUrl) {
+    const image = document.getElementById("productImage");
+    const imagePlaceholder = document.getElementById("imagePlaceholder");
+    if (imageUrl) {
+      image.src = imageUrl;
+      image.style.display = "block";
+      imagePlaceholder.style.display = "none";
+    } else {
+      image.src = DEFAULT_HERO_IMAGE;
+      image.style.display = "block";
+      imagePlaceholder.style.display = "none";
+    }
+  }
+
+  function highlightThumb(idx) {
+    document.querySelectorAll(".thumb-btn").forEach((btn) => btn.classList.remove("active"));
+    const active = document.querySelector('[data-thumb-index="' + idx + '"]');
+    if (active) active.classList.add("active");
+  }
+
+  function renderThumbnails(variants) {
+    const strip = document.getElementById("thumbStrip");
+    strip.innerHTML = "";
+
+    if (!variants.length) {
+      if (currentProduct.image) {
+        const btn = document.createElement("button");
+        btn.className = "thumb-btn active";
+        btn.type = "button";
+        btn.innerHTML = '<img class="thumb-img" src="' + currentProduct.image + '" alt="Main image" />';
+        btn.onclick = function () { updateMainImage(currentProduct.image); };
+        strip.appendChild(btn);
+      }
+      return;
+    }
+
+    variants.forEach((variant, idx) => {
+      const img = variant.image || currentProduct.image || "";
+      if (!img) return;
+      const label = shortVariantLabel(variant.name, idx);
+      const btn = document.createElement("button");
+      btn.className = "thumb-btn";
+      btn.type = "button";
+      btn.setAttribute("data-thumb-index", String(idx));
+      btn.innerHTML = '<img class="thumb-img" src="' + img + '" alt="' + label + '" />';
+      btn.onclick = function () { selectVariant(idx); };
+      strip.appendChild(btn);
+    });
+  }
+
+  function wireDefaultThumbnails() {
+    const strip = document.getElementById("thumbStrip");
+    if (!strip) return;
+    strip.querySelectorAll(".thumb-btn").forEach((btn) => {
+      const idx = Number(btn.getAttribute("data-thumb-index") || "0");
+      btn.onclick = function () {
+        updateMainImage(DEFAULT_THUMB_IMAGES[idx] || DEFAULT_HERO_IMAGE);
+        highlightThumb(idx);
+      };
+    });
+  }
+
+  function wireThumbArrow() {
+    const wrap = document.querySelector(".thumb-wrap");
+    const strip = document.getElementById("thumbStrip");
+    const prevBtn = document.getElementById("thumbPrev");
+    const nextBtn = document.getElementById("thumbNext");
+    if (!wrap || !strip || !nextBtn || !prevBtn) return;
+
+    const edgeZone = 80;
+    const setVisible = function (prevVisible, nextVisible) {
+      prevBtn.classList.toggle("visible", prevVisible);
+      nextBtn.classList.toggle("visible", nextVisible);
+    };
+
+    wrap.addEventListener("mousemove", function (event) {
+      const rect = wrap.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const nearLeft = x <= edgeZone;
+      const nearRight = x >= rect.width - edgeZone;
+      setVisible(nearLeft, nearRight);
+    });
+
+    wrap.addEventListener("mouseleave", function () {
+      setVisible(false, false);
+    });
+
+    prevBtn.onclick = function () {
+      strip.scrollBy({ left: -150, behavior: "smooth" });
+    };
+    nextBtn.onclick = function () {
+      strip.scrollBy({ left: 150, behavior: "smooth" });
+    };
+  }
+
+  function renderVariants(variants) {
+    const container = document.getElementById("variantsContainer");
+    container.innerHTML = "";
+
+    if (!variants.length) {
+      container.innerHTML = '<div class="status">No variants returned from CJ for this SKU.</div>';
+      return;
+    }
+
+    variants.forEach((variant, idx) => {
+      const node = document.createElement("div");
+      node.className = "variant" + (idx === 0 ? " selected" : "");
+      node.setAttribute("data-variant-index", String(idx));
+      node.onclick = function () {
+        handleVariantClick(idx);
+      };
+      const displayName = shortVariantLabel(variant.name, idx);
+      const variantImage = variant.image || currentProduct.image || "";
+      const displayPrice = formatPrice(displayName);
+      const imageHtml = variantImage
+        ? '<img class="variant-image" src="' + variantImage + '" alt="' + displayName + '" />'
+        : '<div class="variant-image"></div>';
+      node.innerHTML =
+        '<div class="variant-row">' +
+          '<div class="variant-meta">' +
+            imageHtml +
+            '<div>' +
+              '<div class="variant-name">' + displayName + "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="variant-price" data-original-price="' + displayPrice + '">' + displayPrice + "</div>" +
+        "</div>";
+      container.appendChild(node);
+    });
+    const preferredIndex = variants.findIndex((v) => v.sku === TARGET_SKU);
+    selectVariant(preferredIndex >= 0 ? preferredIndex : 0);
+  }
+
+  function renderDefaultVariants() {
+    const container = document.getElementById("variantsContainer");
+    container.innerHTML = "";
+
+    DEFAULT_VARIANTS.forEach((variant, idx) => {
+      const node = document.createElement("div");
+      node.className = "variant" + (idx === 0 ? " selected" : "");
+      node.setAttribute("data-variant-index", String(idx));
+      node.onclick = function () {
+        handleVariantClick(idx);
+      };
+      node.innerHTML =
+        '<div class="variant-row">' +
+          '<div class="variant-meta">' +
+            '<img class="variant-image" src="' + variant.image + '" alt="' + variant.name + '" />' +
+            '<div><div class="variant-name">' + variant.name + "</div></div>" +
+          "</div>" +
+          '<div class="variant-price" data-original-price="' + formatPrice(variant.name) + '">' + formatPrice(variant.name) + "</div>" +
+        "</div>";
+      container.appendChild(node);
+    });
+  }
+
+  async function loadProduct() {
+    const status = document.getElementById("statusText");
+    status.style.display = "none";
+    status.textContent = "";
+
+    try {
+      const res = await fetch("/api/cj-product");
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Failed to load product from backend");
+
+      currentProduct = payload;
+      isDataReady = true;
+
+      document.getElementById("productTitle").textContent = CUSTOM_TITLE;
+      document.getElementById("productDescription").textContent = CUSTOM_DESCRIPTION;
+
+      renderVariants(payload.variants || []);
+      renderThumbnails(payload.variants || []);
+      const preferredIndex = pendingVariantIndex !== null
+        ? pendingVariantIndex
+        : ((payload.variants || []).findIndex((v) => v.sku === TARGET_SKU));
+      const safeIndex = preferredIndex >= 0 ? preferredIndex : 0;
+      selectVariant(safeIndex);
+      updateMainImage((payload.variants && payload.variants[safeIndex] && payload.variants[safeIndex].image) || payload.image || DEFAULT_HERO_IMAGE);
+      status.textContent = "";
+    } catch (err) {
+      status.style.display = "block";
+      status.textContent = "Error: " + err.message;
+      document.getElementById("productTitle").textContent = "Unable to load product";
+      document.getElementById("productDescription").textContent = "Please check your API credentials in .env.";
+    }
+  }
+
+  function addToCart() {
+    const btn = document.querySelector(".add-btn");
+    const variant = getSelectedVariantData();
+    if (!variant) return;
+    const selectedIdx = getSelectedVariantIndex();
+    const productName = CUSTOM_TITLE;
+    const variantName = shortVariantLabel(variant.name, selectedIdx);
+    const itemId = (variant.sku || variantName).toLowerCase();
+    const cartPrice = priceForLabelSek(variantName);
+
+    const cart = loadCart();
+    const existing = cart.find((item) => item.id === itemId);
+    if (existing) {
+      existing.qty = (Number(existing.qty) || 0) + 1;
+    } else {
+      cart.push({
+        id: itemId,
+        vid: variant.vid || "",
+        sku: variant.sku || "",
+        product: productName,
+        variant: variantName,
+        price: cartPrice,
+        currency: "SEK",
+        image: variant.image || DEFAULT_HERO_IMAGE,
+        qty: 1
+      });
+    }
+    saveCart(cart);
+    updateCartCount();
+    renderCartView();
+
+    console.log("Add to cart", {
+      sku: variant.sku || "",
+      product: productName,
+      variant: variantName
+    });
+
+    btn.textContent = "Added to cart";
+    btn.style.background = "#0f7a45";
+    setTimeout(() => {
+      btn.textContent = "Add to cart";
+      btn.style.background = "#1a1a2e";
+    }, 1500);
+  }
+
+  wireDefaultThumbnails();
+  wireThumbArrow();
+  renderDefaultVariants();
+  updateCartCount();
+  document.getElementById("cartButton").onclick = function () {
+    window.location.href = "cart.html";
+  };
+  document.getElementById("cartClose").onclick = closeCartView;
+  document.getElementById("cartOverlay").onclick = function (event) {
+    if (event.target.id === "cartOverlay") closeCartView();
+  };
+  loadProduct();
+</script>

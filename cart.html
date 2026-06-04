@@ -1,0 +1,575 @@
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap");
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #efefef; font-family: "DM Sans", sans-serif; color: #1a1a2e; }
+  .page { max-width: 430px; margin: 0 auto; background: #fff; min-height: 100vh; padding-bottom: 120px; }
+  .head { background: #1a1a2e; color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .head-title { font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
+  .back-btn { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; padding: 5px 10px; }
+  .section-title { padding: 16px 16px 10px; font-size: 20px; font-family: "DM Serif Display", serif; }
+  .cart-list { padding: 0 12px; }
+  .cart-item { border: 1.5px solid #e4e1db; border-radius: 14px; padding: 12px; display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .item-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; border: 1px solid #e6e3dc; background: #f5f3ee; }
+  .item-main { flex: 1; min-width: 0; }
+  .item-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-price { font-size: 12px; color: #666; margin-top: 2px; }
+  .qty-wrap { display: flex; align-items: center; gap: 6px; }
+  .qty-btn { width: 26px; height: 26px; border-radius: 7px; border: 1px solid #d7d3cc; background: #fff; cursor: pointer; font-size: 15px; }
+  .qty-num { min-width: 16px; text-align: center; font-weight: 700; }
+  .empty { margin: 0 12px; border: 1.5px dashed #ddd8d0; border-radius: 14px; padding: 16px; color: #777; font-size: 13px; }
+  .totals { margin: 6px 12px 14px; border: 1.5px solid #e4e1db; border-radius: 14px; padding: 12px; }
+  .row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 8px; }
+  .row:last-child { margin-bottom: 0; padding-top: 8px; border-top: 1px solid #ece9e3; font-weight: 700; font-size: 16px; }
+  .details { margin: 0 12px; border: 1.5px solid #e4e1db; border-radius: 14px; padding: 12px; }
+  .details h3 { font-size: 16px; margin-bottom: 10px; }
+  .field { margin-bottom: 8px; }
+  .field label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .field input, .field textarea, .field select { width: 100%; border: 1.5px solid #d9d5cf; border-radius: 10px; padding: 10px; font-size: 14px; font-family: "DM Sans", sans-serif; background: #fff; }
+  .field textarea { min-height: 72px; resize: vertical; }
+  .address-wrapper { position: relative; }
+  .searching-text { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #777; display: none; }
+  .suggestions-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1.5px solid #d9d5cf; border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 50; display: none; }
+  .suggestions-dropdown.active { display: block; }
+  .suggestion-item { width: 100%; text-align: left; border: none; border-bottom: 1px solid #ece9e3; background: #fff; padding: 9px 10px; font-size: 13px; color: #1a1a2e; cursor: pointer; }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: #f7f6f3; }
+  .place-btn { margin-top: 10px; width: 100%; border: none; border-radius: 999px; background: #1a1a2e; color: #fff; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .note { margin-top: 8px; font-size: 11px; color: #7a7a7a; line-height: 1.4; }
+  .shipping-box { margin: 10px 12px 0; border: 1.5px solid #e4e1db; border-radius: 14px; padding: 12px; }
+  .shipping-box h3 { font-size: 16px; margin-bottom: 8px; }
+  .shipping-empty { font-size: 13px; color: #777; }
+  .ship-option { border: 1px solid #e5e1da; border-radius: 10px; padding: 10px; margin-top: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ship-option.selected { border-color: #1a1a2e; background: #f9f8f6; }
+  .ship-name { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+  .ship-aging { font-size: 12px; color: #666; margin-top: 2px; }
+  .ship-price { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+  .ship-status { font-size: 12px; color: #777; margin-top: 8px; }
+  .checkout-sticky { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 430px; background: #fff; border-top: 1px solid #ece9e3; padding: 10px 12px 12px; z-index: 200; }
+  .checkout-total { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+  .checkout-btn { width: 100%; border: none; border-radius: 999px; background: #1a1a2e; color: #fff; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .payment-box { margin: 10px 12px 0; border: 1.5px solid #e4e1db; border-radius: 14px; padding: 12px; }
+  .payment-box h3 { font-size: 16px; margin-bottom: 8px; }
+  .payment-methods { display: flex; flex-direction: column; gap: 8px; }
+  .pay-option { border: 1px solid #e5e1da; border-radius: 10px; padding: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; background: #fff; }
+  .pay-option.selected { border-color: #1a1a2e; background: #f9f8f6; }
+  .pay-left { display: flex; align-items: center; gap: 8px; }
+  .pay-icon { width: 22px; text-align: center; font-size: 15px; }
+  .pay-name { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+  .pay-sub { font-size: 12px; color: #666; margin-top: 2px; }
+  .pay-check { font-size: 14px; color: #1a1a2e; opacity: 0; }
+  .pay-option.selected .pay-check { opacity: 1; }
+  .payment-note { margin-top: 8px; font-size: 12px; color: #777; }
+</style>
+
+<div class="page">
+  <div class="head">
+    <div class="head-title">Happy Baby Cart</div>
+    <a class="back-btn" href="happy_baby_product_store.html">Back</a>
+  </div>
+
+  <div class="section-title">Your Selected Products</div>
+  <div id="cartList" class="cart-list"></div>
+  <div id="emptyState" class="empty" style="display:none;">Your cart is empty. Go back and add products.</div>
+
+  <div class="totals">
+    <div class="row"><span>Items</span><span id="itemsCount">0</span></div>
+    <div class="row"><span>Subtotal</span><span id="subtotal">0,00 kr</span></div>
+    <div class="row"><span>Shipping</span><span id="shippingTotal">0,00 kr</span></div>
+    <div class="row"><span>Total</span><span id="total">0,00 kr</span></div>
+  </div>
+
+  <div class="details">
+    <h3>Checkout Details</h3>
+    <div class="field">
+      <label for="fullName">Full Name</label>
+      <input id="fullName" type="text" placeholder="Customer full name" />
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="customer@email.com" />
+    </div>
+    <div class="field">
+      <label for="phone">Phone</label>
+      <input id="phone" type="text" placeholder="+1 555 555 5555" />
+    </div>
+    <div class="field">
+      <label for="country">Country</label>
+      <select id="country" onchange="onCountryChanged()">
+        <option value="">Select country...</option>
+        <option value="SE">Sweden</option>
+        <option value="NO">Norway</option>
+        <option value="DK">Denmark</option>
+        <option value="FI">Finland</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="GB">United Kingdom</option>
+        <option value="US">United States</option>
+        <option value="CA">Canada</option>
+        <option value="AU">Australia</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="address">Shipping Address</label>
+      <div class="address-wrapper">
+        <input id="address" type="text" placeholder="Search for your address..." oninput="handleAddressSearch(event)" />
+        <div id="searchingText" class="searching-text">Searching...</div>
+        <div id="addressSuggestions" class="suggestions-dropdown"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="shipping-box">
+    <h3>Shipping Options</h3>
+    <div id="shippingOptions" class="shipping-empty">Enter country code to calculate shipping.</div>
+    <div id="shippingStatus" class="ship-status"></div>
+  </div>
+
+  <div class="payment-box">
+    <h3>Payment</h3>
+    <div class="payment-methods">
+      <button id="payCard" class="pay-option selected" type="button" onclick="selectPaymentMethod('card')">
+        <div class="pay-left">
+          <span class="pay-icon">💳</span>
+          <div>
+            <div class="pay-name">Card</div>
+            <div class="pay-sub">Visa, Mastercard, Amex</div>
+          </div>
+        </div>
+        <span class="pay-check">✓</span>
+      </button>
+      <button id="payApple" class="pay-option" type="button" onclick="selectPaymentMethod('apple_pay')">
+        <div class="pay-left">
+          <span class="pay-icon"></span>
+          <div>
+            <div class="pay-name">Apple Pay</div>
+            <div class="pay-sub">Fast checkout on supported devices</div>
+          </div>
+        </div>
+        <span class="pay-check">✓</span>
+      </button>
+      <button id="payKlarna" class="pay-option" type="button" onclick="selectPaymentMethod('klarna')">
+        <div class="pay-left">
+          <span class="pay-icon">K</span>
+          <div>
+            <div class="pay-name">Klarna</div>
+            <div class="pay-sub">Pay now / later where available</div>
+          </div>
+        </div>
+        <span class="pay-check">✓</span>
+      </button>
+    </div>
+    <div class="payment-note">Processed securely by Stripe.</div>
+  </div>
+</div>
+
+<div class="checkout-sticky">
+  <div class="checkout-total">
+    <span>Total</span>
+    <span id="stickyTotal">0,00 kr</span>
+  </div>
+  <button class="checkout-btn" type="button" onclick="submitOrder()">Proceed to Payment</button>
+</div>
+
+<script>
+  const CART_STORAGE_KEY = "happybaby_cart";
+  const CHECKOUT_PRODUCT_TITLE = "Baby Patter Sleep Companion";
+  const USD_TO_SEK_RATE = 10.6;
+  let shippingOptionsState = [];
+  let selectedShippingIdx = -1;
+  let selectedPaymentMethod = "card";
+  let addressSearchTimer = null;
+  const COUNTRY_MAP = {
+    "sweden": "SE",
+    "se": "SE",
+    "swedish": "SE",
+    "united states": "US",
+    "usa": "US",
+    "us": "US",
+    "germany": "DE",
+    "de": "DE",
+    "denmark": "DK",
+    "dk": "DK",
+    "norway": "NO",
+    "no": "NO",
+    "finland": "FI",
+    "fi": "FI",
+    "france": "FR",
+    "fr": "FR",
+    "spain": "ES",
+    "es": "ES",
+    "italy": "IT",
+    "it": "IT",
+    "netherlands": "NL",
+    "nl": "NL",
+    "united kingdom": "GB",
+    "uk": "GB",
+    "great britain": "GB",
+    "gb": "GB",
+    "canada": "CA",
+    "ca": "CA",
+    "australia": "AU",
+    "au": "AU"
+  };
+
+  function formatSek(amount) {
+    return Number(amount || 0).toFixed(2).replace(".", ",") + " kr";
+  }
+
+  function usdToSek(amountUsd) {
+    return (Number(amountUsd) || 0) * USD_TO_SEK_RATE;
+  }
+
+  function loadCart() {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      let changed = false;
+      const normalized = parsed.map((item) => {
+        const next = { ...item };
+        if (!next.product || next.product !== CHECKOUT_PRODUCT_TITLE) {
+          next.product = CHECKOUT_PRODUCT_TITLE;
+          changed = true;
+        }
+        if (next.currency !== "SEK") {
+          next.price = usdToSek(Number(next.price) || 0);
+          next.currency = "SEK";
+          changed = true;
+        }
+        return next;
+      });
+      if (changed) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  }
+
+  function getPrimaryCartItem() {
+    const cart = loadCart();
+    if (!cart.length) return null;
+    const withVid = cart.find((item) => item.vid);
+    if (withVid) return withVid;
+    const withSku = cart.find((item) => item.sku);
+    if (withSku) return withSku;
+    return cart[0];
+  }
+
+  function changeQty(id, delta) {
+    const cart = loadCart();
+    const idx = cart.findIndex((item) => item.id === id);
+    if (idx < 0) return;
+    cart[idx].qty = (Number(cart[idx].qty) || 0) + delta;
+    if (cart[idx].qty <= 0) cart.splice(idx, 1);
+    saveCart(cart);
+    renderCart();
+  }
+
+  function renderCart() {
+    const cart = loadCart();
+    const list = document.getElementById("cartList");
+    const empty = document.getElementById("emptyState");
+    const itemsCount = document.getElementById("itemsCount");
+    const subtotal = document.getElementById("subtotal");
+    const shippingTotal = document.getElementById("shippingTotal");
+    const total = document.getElementById("total");
+    const stickyTotal = document.getElementById("stickyTotal");
+
+    let count = 0;
+    let amount = 0;
+
+    if (!cart.length) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+      itemsCount.textContent = "0";
+      subtotal.textContent = formatSek(0);
+      if (shippingTotal) shippingTotal.textContent = formatSek(0);
+      total.textContent = formatSek(0);
+      if (stickyTotal) stickyTotal.textContent = formatSek(0);
+      return;
+    }
+
+    empty.style.display = "none";
+    list.innerHTML = cart.map((item) => {
+      const qty = Number(item.qty) || 0;
+      const price = Number(item.price) || 0;
+      count += qty;
+      amount += qty * price;
+      return (
+        '<div class="cart-item">' +
+          '<img class="item-img" src="' + (item.image || "") + '" alt="' + (item.variant || "Item") + '" />' +
+          '<div class="item-main">' +
+            '<div class="item-name">' + (item.variant || item.product || CHECKOUT_PRODUCT_TITLE) + "</div>" +
+            '<div class="item-price">' + formatSek(price) + " each</div>" +
+          "</div>" +
+          '<div class="qty-wrap">' +
+            '<button class="qty-btn" type="button" onclick="changeQty(\'' + item.id + '\', -1)">−</button>' +
+            '<span class="qty-num">' + qty + "</span>" +
+            '<button class="qty-btn" type="button" onclick="changeQty(\'' + item.id + '\', 1)">+</button>' +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+
+    itemsCount.textContent = String(count);
+    subtotal.textContent = formatSek(amount);
+    const shippingSek = selectedShippingIdx >= 0 && shippingOptionsState[selectedShippingIdx]
+      ? usdToSek(Number(shippingOptionsState[selectedShippingIdx].logisticPrice) || 0)
+      : 0;
+    if (shippingTotal) shippingTotal.textContent = formatSek(shippingSek);
+    const grandTotal = amount + shippingSek;
+    total.textContent = formatSek(grandTotal);
+    if (stickyTotal) stickyTotal.textContent = formatSek(grandTotal);
+  }
+
+  function renderShippingOptions() {
+    const box = document.getElementById("shippingOptions");
+    if (!box) return;
+
+    if (!shippingOptionsState.length) {
+      box.className = "shipping-empty";
+      box.textContent = "No shipping options yet.";
+      return;
+    }
+
+    box.className = "";
+    box.innerHTML = shippingOptionsState
+      .map((opt, idx) => {
+        const isSelected = idx === selectedShippingIdx;
+        return (
+          '<div class="ship-option' + (isSelected ? " selected" : "") + '" onclick="selectShippingOption(' + idx + ')">' +
+            '<div>' +
+              '<div class="ship-name">' + (opt.logisticName || "Carrier") + "</div>" +
+              '<div class="ship-aging">' + (opt.logisticAging || "Estimated time unavailable") + "</div>" +
+            "</div>" +
+            '<div class="ship-price">' + formatSek(usdToSek(Number(opt.logisticPrice || 0))) + "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+  }
+
+  function selectShippingOption(idx) {
+    selectedShippingIdx = idx;
+    renderShippingOptions();
+    renderCart();
+  }
+
+  function clearAddressSuggestions() {
+    const dropdown = document.getElementById("addressSuggestions");
+    if (!dropdown) return;
+    dropdown.replaceChildren();
+    dropdown.classList.remove("active");
+  }
+
+  function renderAddressSuggestions(results) {
+    const dropdown = document.getElementById("addressSuggestions");
+    if (!dropdown) return;
+
+    dropdown.replaceChildren();
+    if (!Array.isArray(results) || !results.length) {
+      dropdown.classList.remove("active");
+      return;
+    }
+
+    results.forEach((result) => {
+      const label = String(result && result.display_name ? result.display_name : "").trim();
+      if (!label) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "suggestion-item";
+      button.textContent = label;
+      button.addEventListener("click", () => selectAddress(label));
+      dropdown.appendChild(button);
+    });
+
+    if (dropdown.childElementCount > 0) {
+      dropdown.classList.add("active");
+    } else {
+      dropdown.classList.remove("active");
+    }
+  }
+
+  function selectPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    document.querySelectorAll(".pay-option").forEach((el) => el.classList.remove("selected"));
+    if (method === "card") document.getElementById("payCard").classList.add("selected");
+    if (method === "apple_pay") document.getElementById("payApple").classList.add("selected");
+    if (method === "klarna") document.getElementById("payKlarna").classList.add("selected");
+  }
+
+  function normalizeCountryCode(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/^[A-Za-z]{2}$/.test(raw)) return raw.toUpperCase();
+    const mapped = COUNTRY_MAP[raw.toLowerCase()];
+    return mapped || "";
+  }
+
+  async function onCountryChanged() {
+    const status = document.getElementById("shippingStatus");
+    const countryCode = normalizeCountryCode(document.getElementById("country").value);
+    if (!countryCode) {
+      shippingOptionsState = [];
+      selectedShippingIdx = -1;
+      renderShippingOptions();
+      status.textContent = "";
+      document.getElementById("shippingOptions").textContent = "Select country to calculate shipping.";
+      document.getElementById("shippingOptions").className = "shipping-empty";
+      return;
+    }
+
+    const item = getPrimaryCartItem();
+    if (!item) {
+      status.textContent = "Add a product to cart first.";
+      return;
+    }
+
+    status.textContent = "Calculating shipping...";
+    try {
+      const res = await fetch("/api/cj-freight-calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          endCountryCode: countryCode,
+          quantity: Number(item.qty) || 1,
+          vid: item.vid || "",
+          variantSku: item.sku || ""
+        })
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Failed to calculate shipping");
+
+      shippingOptionsState = Array.isArray(payload.options) ? payload.options : [];
+      selectedShippingIdx = shippingOptionsState.length ? 0 : -1;
+      renderShippingOptions();
+      renderCart();
+      status.textContent = shippingOptionsState.length
+        ? "Shipping rates loaded."
+        : "No shipping options returned for this country.";
+    } catch (err) {
+      shippingOptionsState = [];
+      selectedShippingIdx = -1;
+      renderShippingOptions();
+      renderCart();
+      status.textContent = "Shipping error: " + err.message;
+    }
+  }
+
+  async function handleAddressSearch(event) {
+    const query = String(event.target.value || "").trim();
+    const dropdown = document.getElementById("addressSuggestions");
+    const searching = document.getElementById("searchingText");
+    if (!dropdown || !searching) return;
+
+    if (addressSearchTimer) clearTimeout(addressSearchTimer);
+
+    if (query.length < 3) {
+      clearAddressSuggestions();
+      searching.style.display = "none";
+      return;
+    }
+
+    addressSearchTimer = setTimeout(async () => {
+      searching.style.display = "block";
+      try {
+        const res = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(query) + "&limit=5");
+        const results = await res.json();
+        renderAddressSuggestions(results);
+      } catch (err) {
+        clearAddressSuggestions();
+      } finally {
+        searching.style.display = "none";
+      }
+    }, 250);
+  }
+
+  function selectAddress(address) {
+    const input = document.getElementById("address");
+    if (input) input.value = address;
+    clearAddressSuggestions();
+  }
+
+  function buildStripePayload(cart, customer, selectedShipping) {
+    const methodTypes = selectedPaymentMethod === "klarna" ? ["card", "klarna"] : ["card"];
+    return {
+      mode: "payment",
+      currency: "sek",
+      customer_email: customer.email || "",
+      payment_method_types: methodTypes,
+      line_items: cart.map((item) => ({
+        name: item.variant || "Baby Patter",
+        unit_amount: Math.round((Number(item.price) || 0) * 100),
+        quantity: Number(item.qty) || 1
+      })),
+      shipping_rate_data: selectedShipping ? {
+        display_name: selectedShipping.logisticName || "Shipping",
+        fixed_amount: {
+          amount: Math.round(usdToSek(Number(selectedShipping.logisticPrice) || 0) * 100),
+          currency: "sek"
+        }
+      } : null,
+      metadata: {
+        countryCode: customer.countryCode || "",
+        address: customer.address || "",
+        phone: customer.phone || "",
+        preferredPaymentMethod: selectedPaymentMethod
+      }
+    };
+  }
+
+  function submitOrder() {
+    const cart = loadCart();
+    if (!cart.length) {
+      alert("Cart is empty.");
+      return;
+    }
+
+    const countryCode = normalizeCountryCode(document.getElementById("country").value);
+    if (!countryCode) {
+      alert("Please select a country.");
+      return;
+    }
+    if (!document.getElementById("address").value.trim()) {
+      alert("Please enter shipping address.");
+      return;
+    }
+    if (selectedShippingIdx < 0 || !shippingOptionsState[selectedShippingIdx]) {
+      alert("Please choose a shipping option.");
+      return;
+    }
+
+    const customer = {
+      fullName: document.getElementById("fullName").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      countryCode: countryCode,
+      address: document.getElementById("address").value.trim()
+    };
+
+    const payload = {
+      customer: customer,
+      cjOrderItems: cart.map((item) => ({
+        vid: item.vid || "",
+        variantSku: item.sku || "",
+        quantity: Number(item.qty) || 0,
+        price: Number(item.price) || 0
+      })),
+      selectedShipping: selectedShippingIdx >= 0 ? shippingOptionsState[selectedShippingIdx] : null,
+      stripeCheckout: buildStripePayload(cart, customer, selectedShippingIdx >= 0 ? shippingOptionsState[selectedShippingIdx] : null)
+    };
+
+    console.log("Prepared CJ order payload:", payload);
+    alert("Order and Stripe payload prepared. Open browser console to copy payload.");
+  }
+
+  renderCart();
+</script>

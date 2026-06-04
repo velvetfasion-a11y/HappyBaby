@@ -12,6 +12,7 @@ from wsgiref.simple_server import make_server
 
 PROJECT_DIR = Path(__file__).resolve().parent
 ENV_PATH = PROJECT_DIR / ".env"
+DEFAULT_CJ_PRODUCT_SKU = "CJYD233025008HS"
 
 
 def load_dotenv(path: Path) -> dict:
@@ -27,7 +28,10 @@ def load_dotenv(path: Path) -> dict:
     return data
 
 
-CONFIG = load_dotenv(ENV_PATH)
+FILE_CONFIG = load_dotenv(ENV_PATH)
+# Merge local .env with real process environment variables (e.g. Render dashboard).
+# Environment variables take priority so production config works without a committed .env.
+CONFIG = {**FILE_CONFIG, **os.environ}
 _PRODUCT_CACHE = {"expires_at": 0.0, "value": None}
 
 
@@ -155,7 +159,7 @@ def resolve_access_token(base_url: str) -> str:
             token = data.get("accessToken") or auth_response.get("accessToken") or ""
             if token:
                 return token
-        raise RuntimeError("Missing CJ_ACCESS_TOKEN or CJ_API_KEY in .env")
+        raise RuntimeError("Missing CJ_ACCESS_TOKEN or CJ_API_KEY in environment variables")
 
     auth_url = f"{base_url}/authentication/getAccessToken"
     auth_response = request_json(auth_url, method="POST", body={"apiKey": api_key})
@@ -173,11 +177,8 @@ def fetch_cj_product() -> dict:
         return _PRODUCT_CACHE["value"]
 
     base_url = CONFIG.get("CJ_API_BASE_URL", "https://developers.cjdropshipping.com/api2.0/v1").rstrip("/")
-    sku = CONFIG.get("CJ_PRODUCT_SKU", "").strip()
+    sku = DEFAULT_CJ_PRODUCT_SKU
     token = resolve_access_token(base_url)
-
-    if not sku:
-        raise RuntimeError("Missing CJ_PRODUCT_SKU in .env")
 
     headers = {"CJ-Access-Token": token}
 

@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <script src="https://js.stripe.com/v3/"></script>
 <style>
   @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap");
@@ -60,7 +65,17 @@
   .pay-check { font-size: 14px; color: #1a1a2e; opacity: 0; }
   .pay-option.selected .pay-check { opacity: 1; }
   .payment-note { margin-top: 8px; font-size: 12px; color: #777; }
+  @media (max-width: 600px) {
+    body { background: #fff; }
+    .page,
+    .checkout-sticky {
+      width: 100%;
+      max-width: none;
+    }
+  }
 </style>
+</head>
+<body>
 
 <div class="page">
   <div class="head">
@@ -573,3 +588,5 @@
 
   renderCart();
 </script>
+</body>
+</html>

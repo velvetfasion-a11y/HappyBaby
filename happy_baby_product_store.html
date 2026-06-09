@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap");
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +58,17 @@
   .cart-qty-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #d7d3cc; background: #fff; cursor: pointer; }
   .cart-total { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ece9e3; display: flex; justify-content: space-between; font-weight: 700; color: #1a1a2e; }
   .cart-empty { font-size: 13px; color: #777; padding: 12px 4px; }
+  @media (max-width: 600px) {
+    body { background: #fff; }
+    .store,
+    .cart-panel {
+      width: 100%;
+      max-width: none;
+    }
+  }
 </style>
+</head>
+<body>
 
 <div class="store">
   <div class="store-header">
@@ -602,3 +617,5 @@
   };
   loadProduct();
 </script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +11,28 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #fff; }
   .store { font-family: "DM Sans", sans-serif; background: #fff; width: 100%; max-width: 600px; margin: 0 auto; min-height: 100vh; padding: 0 0 2rem; }
+=======
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap");
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html,
+  body {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+  }
+  body { background: #fff; overflow-x: hidden; }
+  img,
+  svg {
+    max-width: 100%;
+  }
+  .store { width: 100%; font-family: "DM Sans", sans-serif; background: #fff; min-height: 100vh; padding: 0 0 2rem; }
+>>>>>>> 148f8636692e919c2fce9620d0ef1c9664b4c4bf
   .store-header { background: #1a1a2e; color: #fff; text-align: center; padding: 14px 20px; letter-spacing: 0.18em; font-size: 13px; font-weight: 600; text-transform: uppercase; position: relative; }
   .cart-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; background: transparent; font-size: 15px; cursor: pointer; }
   .cart-btn:hover { background: rgba(255, 255, 255, 0.12); }
@@ -46,7 +69,7 @@
   .status { padding: 12px 20px 0; font-size: 13px; color: #666; }
   .cart-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.42); display: none; align-items: flex-end; justify-content: center; z-index: 1000; }
   .cart-overlay.open { display: flex; }
-  .cart-panel { width: 100%; max-width: 400px; max-height: 70vh; background: #fff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 14px 14px 16px; display: flex; flex-direction: column; }
+  .cart-panel { width: 100%; max-height: 70vh; background: #fff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 14px 14px 16px; display: flex; flex-direction: column; }
   .cart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .cart-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
   .cart-close { border: none; background: transparent; font-size: 22px; line-height: 1; color: #666; cursor: pointer; }
@@ -60,7 +83,17 @@
   .cart-qty-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #d7d3cc; background: #fff; cursor: pointer; }
   .cart-total { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ece9e3; display: flex; justify-content: space-between; font-weight: 700; color: #1a1a2e; }
   .cart-empty { font-size: 13px; color: #777; padding: 12px 4px; }
+  @media (min-width: 601px) {
+    body { background: #efefef; }
+    .store,
+    .cart-panel {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  }
 </style>
+</head>
+<body>
 
 <div class="store">
   <div class="store-header">
@@ -597,3 +630,5 @@
   };
   loadProduct();
 </script>
+</body>
+</html>

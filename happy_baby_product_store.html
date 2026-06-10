@@ -580,20 +580,8 @@
     }
     saveCart(cart);
     updateCartCount();
-    renderCartView();
 
-    console.log("Add to cart", {
-      sku: variant.sku || "",
-      product: productName,
-      variant: variantName
-    });
-
-    btn.textContent = "Added to cart";
-    btn.style.background = "#0f7a45";
-    setTimeout(() => {
-      btn.textContent = "Add to cart";
-      btn.style.background = "#1a1a2e";
-    }, 1500);
+    window.location.href = "cart.html";
   }
 
   wireDefaultThumbnails();

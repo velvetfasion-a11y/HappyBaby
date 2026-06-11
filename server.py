@@ -287,6 +287,8 @@ def serve_static(path: str, start_response):
         content_type = "image/jpeg"
     elif fs_path.suffix == ".png":
         content_type = "image/png"
+    elif fs_path.suffix == ".pdf":
+        content_type = "application/pdf"
     else:
         content_type = "application/octet-stream"
 
